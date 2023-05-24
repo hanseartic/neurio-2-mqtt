@@ -1,4 +1,4 @@
-# 🏘neurio ➡️ MQTT📡
+# 🏘neurio ➡️ MQTT📡 ![GitHub Release Date](https://img.shields.io/github/release-date/hanseartic/neurio-2-mqtt?style=flat-square)
 
 Publish readings from local neurio sensor API sensor to a MQTT broker.
 
@@ -15,7 +15,7 @@ file.
 
 To customize the configuration first get ahold of the default configuration via:
 
-```bash
+```shell
 docker run --rm -v $(pwd)/config:/app/config hanseartic/neurio-2-mqtt init
 ```
 
@@ -34,37 +34,29 @@ host = "10.0.0.101"
 host = "10.0.0.100"
 ```
 
-## Running the bridge
+## ➡️ Running the bridge
 
-Now run the bridge:
+After configuration has been customized just start forwarding the sensor
+readings with the following command:
 
-```bash
+```shell
 docker run --rm --name neurio-2-mqtt -p8080:8080 --restart always -dv $(pwd)/config:/app/config:ro hanseartic/neurio-2-mqtt
 ```
 
-## Homeassistant discovery
+## 👀 Homeassistant discovery
 
 The bridge supports homeassistant
 [MQTT discovery](https://www.home-assistant.io/integrations/mqtt/#mqtt-discovery).
 To publish discovery topics to the MQTT broker send a `USR1` signal to the
-process.
+process:
 
-docker (given you started with the `--name` used above):
-
-```bash
+```shell
 docker kill -s USR1 neurio-2-mqtt
 ```
 
-To send the signal to local instance you need to find the process id and then
+## 🧩 API
 
-```bash
-kill -USR1 <pid of node index.js>
-```
-
-## API
-
-The bridge provides two REST endpoints. After the bridge was started find them
-at
+The bridge provides two REST endpoints:
 
 - `localhost:8080/discovery` listing of all discovery topics
 - `localhost:8080/readings` current sample from all configured sensors
