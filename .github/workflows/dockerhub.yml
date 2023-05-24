@@ -2,7 +2,7 @@ name: Manage docker hub repository
 
 on:
   release:
-  workflow-dispatch:
+  workflow_dispatch:
 
 jobs:
   description:
