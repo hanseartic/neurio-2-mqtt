@@ -1,0 +1,20 @@
+name: Manage docker hub repository
+
+on:
+  release:
+  workflow-dispatch:
+
+jobs:
+  description:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Docker Hub Description
+      uses: peter-evans/dockerhub-description@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+        readme-filepath: ./DOCKER.md
+        short-description: ${{ github.event.repository.description }}
+        enable-url-completion: true

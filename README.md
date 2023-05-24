@@ -1,28 +1,32 @@
-# ⚡generac 📟MQTT 🌉bridge
+# 🏘neurio ➡️ MQTT📡
 
-Publish local generac PWRview sensor readings to a MQTT broker.
+Publish readings from local neurio sensor API sensor to a
+[MQTT](https://mqtt.org/) broker.
 
-## TL;DR
+## 📰 TL;DR
 
-Generac (formerly neurio.io) sensors provide a local JSON API publishing the
-readings.
+neurio (aka Generac PWRview) sensors provide a local JSON API that allows direct
+reading of the sensor data without using the
+[generac cloud](mypwrview.generac.com).
 
-This bridge publishes these local readings to a [MQTT](https://mqtt.org/)
-broker. Following this approach dependencies to generac cloud are cut and
-reliability of your local setup is increased.
+This bridge publishes these local readings to a MQTT broker.
 
-## Configuration
+## ⚙️ Configuration
 
-The bridge can be run as a docker container or using node directly.
-
-Configuration is done with [`.toml`](https://toml.io/en/)-files.
+The bridge can be run as a **docker container** or **locally** using node
+directly.
 
 Either way the bridge needs to be configured. A default configuration is in
-place to provide defaults. But at least the connections to mqtt and the generac
-sensor need customization.
+place to provide defaults where applicable.
 
-Configurations made in [`app/config/local.toml`](app/config/local.toml) override
-setting in the [default configuration](app/defaultConfig/default.toml) file.
+Configuration is stored in [`.toml`](https://toml.io/en/)-files. There is a
+[default configuration](app/defaultConfig/default.toml) file that should not be
+changed but provides basic settings.
+
+Most settings can be kept as is but at least the connections to MQTT and the
+neurio sensor need customization. Settings stored in `app/config/local.toml`
+override settings in the [default configuration](app/defaultConfig/default.toml)
+file.
 
 So a minimal `local.toml` file could look like this:
 
@@ -34,16 +38,16 @@ host = "10.0.0.101"
 host = "10.0.0.100"
 ```
 
-Read to the next section where and how to find that config file.
+Read to the next section where and how to find that custom config file.
 
 ## Running the bridge
 
-### Docker
+### 🐳 Docker
 
 First get ahold of the default configuration via:
 
 ```bash
-docker run --rm -v $(pwd)/config:/app/config hanseartic/generac_mqtt_bridge init
+docker run --rm -v $(pwd)/config:/app/config hanseartic/neurio_2_mqtt init
 ```
 
 You will now find a copy of the default config in `config/local.toml`.
@@ -64,17 +68,17 @@ host = "10.0.0.100"
 Now run the bridge:
 
 ```bash
-docker run --rm --name generac_mqtt_bridge -dv $(pwd)/config:/app/config:ro hanseartic/generac_mqtt_bridge
+docker run --rm --name neurio_2_mqtt -dv $(pwd)/config:/app/config:ro hanseartic/neurio_2_mqtt
 ```
 
-### Local bridge
+### 💻 Local bridge
 
 Running locally with node is only advised while setting up or figuring out your
 configuration.
 
 ```bash
-git clone https://github.com/hanseartic/generac_mqtt_bridge.git
-cd generac_mqtt_bridge/app
+git clone https://github.com/hanseartic/neurio_2_mqtt.git
+cd neurio_2_mqtt/app
 npm ci
 ```
 
@@ -99,7 +103,7 @@ process.
 docker (given you started with the `--name` used above):
 
 ```bash
-docker kill -s USR1 generac_mqtt_bridge
+docker kill -s USR1 neurio_2_mqtt
 ```
 
 To send the signal to local instance you need to find the process id and then
@@ -114,4 +118,4 @@ The bridge provides two REST endpoints. After the bridge was started find them
 at
 
 - `localhost:8080/discovery` listing of all discovery topics
-- `localhost:8080/readings` current sample from all configured generac sensors
+- `localhost:8080/readings` current sample from all configured sensors

@@ -15,7 +15,6 @@ import timeoutSignal from 'timeout-signal';
 import fs from 'fs';
 import { parse } from 'node-html-parser';
 import { connect } from 'mqtt';
-import { isObject } from 'util';
 
 let config = configUncached();
 let readings = {};
@@ -26,7 +25,7 @@ console.log(customConfig);
 
 const app = express();
 app.get('/readings', (req, res) => {
-    res.status(200).send(readings);//.reduce((a, b) => { a[b.name] = b.content; return a; }, {}));
+    res.status(200).send(readings);
 });
 
 app.get('/discovery', (_, res) => {
@@ -34,9 +33,18 @@ app.get('/discovery', (_, res) => {
 });
 
 app.listen(config.bridge.port, () => {
-    console.log("listening on " + config.bridge.port);
+    console.log('listening on ' + config.bridge.port);
 });
 
+
+const publishReadings = async (readings) => {
+    const c = getMQTTClient();
+    for (const channel of readings.content.channels) {
+        const type = channel.type.replace('_CONSUMPTION', '');
+        //console.log(`publishing to '${config.mqtt.topic}/${readings.name}/${type}/state'`, channel);
+        c.publish(`${config.mqtt.topic}/${readings.name}/${type}/state`, channel);
+    }
+};
 
 const generateDiscoveryTopics = async () => {
     const topics = {};
@@ -74,7 +82,7 @@ const generateDiscoveryTopics = async () => {
         const sensorTopics = sensorReadings.content.channels.reduce((a, b) => {
             const type = b.type.replace('_CONSUMPTION', '');
 
-            a[`${config.homeassistant.discovery_topic}/sensor/generac-${sensorReadings.content.sensorId}/${type}_eImp_Wh`] = {
+            a[`${config.homeassistant.discovery_topic}/sensor/neurio-${sensorReadings.content.sensorId}/${type}_eImp_Wh`] = {
                 name: `${id} ${type} In`,
                 uniq_id: `${sensorReadings.content.sensorId}_${b.ch}_eImp_Wh`,
                 stat_t: `${config.mqtt.topic}/${id}/${type}/state`,
@@ -85,7 +93,7 @@ const generateDiscoveryTopics = async () => {
                 stat_cla: 'total_increasing',
                 exp_aft: 5,
             };
-            a[`${config.homeassistant.discovery_topic}/sensor/generac-${sensorReadings.content.sensorId}/${type}_eExp_Wh`] = {
+            a[`${config.homeassistant.discovery_topic}/sensor/neurio-${sensorReadings.content.sensorId}/${type}_eExp_Wh`] = {
                 name: `${id} ${type} Out`,
                 uniq_id: `${sensorReadings.content.sensorId}_${b.ch}_eExp_Wh`,
                 stat_t: `${config.mqtt.topic}/${id}/${type}/state`,
@@ -96,7 +104,7 @@ const generateDiscoveryTopics = async () => {
                 dev_cla: 'energy',
                 stat_cla: 'total_increasing',
             };
-            a[`${config.homeassistant.discovery_topic}/sensor/generac-${sensorReadings.content.sensorId}/${type}_p_W`] = {
+            a[`${config.homeassistant.discovery_topic}/sensor/neurio-${sensorReadings.content.sensorId}/${type}_p_W`] = {
                 name: `${id} ${type} Watt`,
                 uniq_id: `${sensorReadings.content.sensorId}_${b.ch}_p_W`,
                 stat_t: `${config.mqtt.topic}/${id}/${type}/state`,
@@ -107,7 +115,7 @@ const generateDiscoveryTopics = async () => {
                 dev_cla: 'power',
                 stat_cla: 'measurement',
             };
-            a[`${config.homeassistant.discovery_topic}/sensor/generac-${sensorReadings.content.sensorId}/${type}_v_V`] = {
+            a[`${config.homeassistant.discovery_topic}/sensor/neurio-${sensorReadings.content.sensorId}/${type}_v_V`] = {
                 name: `${id} ${type} Volt`,
                 uniq_id: `${sensorReadings.content.sensorId}_${b.ch}_v_V`,
                 stat_t: `${config.mqtt.topic}/${id}/${type}/state`,
@@ -132,12 +140,13 @@ const requestLoop = setInterval(() => {
     for (const sensorId in config.sensors) {
         const sensor = config.sensors[sensorId];
         if (typeof sensor !== 'object') { continue; }
-        delete readings[sensor.device_name];// = readings.filter(r => r.name !== sensor.device_name);
+        delete readings[sensor.device_name];
         const sensorUrl = `http://${sensor.host}/current-sample`;
         fetch(sensorUrl, { method: "GET", signal: timeoutSignal(1000) })
         .then(res => res.json())
         .then(json => {
             readings[sensor.device_name] = { status: 200, content: json, name: sensor.device_name, };
+            publishReadings(readings[sensor.device_name]);
         })
         .catch(e => {
             if (e instanceof AbortError) {
@@ -159,18 +168,24 @@ fs.watch(__dirname + '/config', (type, filename) => {
     config = configUncached.reloadConfigs();
 });
 
+const getMQTTClient = () => {
+    const clientOptions = {
+        username: config.mqtt.user ? config.mqtt.user : null,
+        password: config.mqtt.password ? config.mqtt.password : null,
+    };
+
+    return connect(`${config.mqtt.proto}://${config.mqtt.host}:${config.mqtt.port}`, clientOptions);
+}
+
 process.on('SIGUSR1', () => {
     generateDiscoveryTopics().then(t => {
         if (!t) { return; }
         console.log('Publishing homeassistant discovery topics to MQTT');
-        const clientOptions = {
-            username: config.mqtt.user ? config.mqtt.user : null,
-            password: config.mqtt.password ? config.mqtt.password : null,
-        };
 
-        const c = connect(`${config.mqtt.proto}://${config.mqtt.host}:${config.mqtt.port}`, clientOptions);
+        const c = getMQTTClient();
         c.on('connect', () => {
             Object.keys(t).forEach(k => {
+                console.log(`${k}/config`);
                 c.publish(`${k}/config`, JSON.stringify(t[k]));
             })
          });

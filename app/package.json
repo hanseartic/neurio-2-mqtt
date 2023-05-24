@@ -1,5 +1,5 @@
 {
-  "name": "generac_mqtt",
+  "name": "generac_mqtt_bridge",
   "description": "Bridge from generac json messages to MQTT",
   "main": "index.js",
   "scripts": {

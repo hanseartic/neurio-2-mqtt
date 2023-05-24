@@ -5,7 +5,7 @@ port = 8080
 query_interval = 1000
 
 [sensors.1]
-host = "generac.local"
+host = "neurio.local"
 device_name = "PWRview"
 
 [mqtt]
@@ -14,7 +14,7 @@ host = "mqtt.local"
 port = 1883
 user = ""
 password = ""
-topic = "generac"
+topic = "neurio"
 
 [homeassistant]
 discovery_topic = "homeassistant"
