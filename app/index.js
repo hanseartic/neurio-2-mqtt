@@ -42,7 +42,7 @@ const publishReadings = async (readings) => {
     for (const channel of readings.content.channels) {
         const type = channel.type.replace('_CONSUMPTION', '');
         //console.log(`publishing to '${config.mqtt.topic}/${readings.name}/${type}/state'`, channel);
-        c.publish(`${config.mqtt.topic}/${readings.name}/${type}/state`, channel);
+        c.publish(`${config.mqtt.topic}/${readings.name}/${type}/state`, JSON.stringify(channel));
     }
 };
 
