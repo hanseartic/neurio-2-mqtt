@@ -1,0 +1,20 @@
+[bridge]
+port = 8080
+
+[sensors]
+query_interval = 1000
+
+[sensors.1]
+host = "generac.local"
+device_name = "PWRview"
+
+[mqtt]
+proto = "mqtt"
+host = "mqtt.local"
+port = 1883
+user = ""
+password = ""
+topic = "generac"
+
+[homeassistant]
+discovery_topic = "homeassistant"
