@@ -64,6 +64,9 @@ docker kill -s USR1 neurio-2-mqtt
 The bridge provides two REST endpoints:
 
 - `localhost:8080/discovery` listing of all discovery topics
+- `localhost:8080/healthcheck` healthcheck endpoint returning 200 when the last
+  reading is not older than configured update interval; this is also checked by
+  docker for healthyness probes
 - `localhost:8080/readings` current sample from all configured sensors
 
 ---
