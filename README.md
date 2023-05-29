@@ -123,4 +123,6 @@ The bridge provides two REST endpoints. After the bridge was started find them
 at
 
 - `localhost:8080/discovery` listing of all discovery topics
+- `localhost:8080/healthcheck` healthcheck endpoint returning 200 when the last
+  reading is not older than configured update interval
 - `localhost:8080/readings` current sample from all configured sensors

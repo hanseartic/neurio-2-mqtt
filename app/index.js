@@ -24,12 +24,23 @@ var customConfig = config.util.diffDeep(defaultConfig, config.util.toObject(conf
 console.log(customConfig);
 
 const app = express();
+const sensorQueryTimeout = 500;
+
 app.get('/readings', (req, res) => {
     res.status(200).send(readings);
 });
 
 app.get('/discovery', (_, res) => {
     generateDiscoveryTopics().then(t => res.send(t));
+});
+
+app.get('/healthcheck', () => {
+    const readingAge = Date.now() - lastReading;
+    if (readingAge > config.sensors.query_interval + sensorQueryTimeout) {
+        res.status(500).send();
+    } else {
+        res.status(200).send({ readingAge });
+    }
 });
 
 app.listen(config.bridge.port, () => {
@@ -135,26 +146,27 @@ const generateDiscoveryTopics = async () => {
     return topics;
 };
 
-
+let lastReading = 0;
 const requestLoop = setInterval(() => {
     for (const sensorId in config.sensors) {
         const sensor = config.sensors[sensorId];
         if (typeof sensor !== 'object') { continue; }
         delete readings[sensor.device_name];
         const sensorUrl = `http://${sensor.host}/current-sample`;
-        fetch(sensorUrl, { method: "GET", signal: timeoutSignal(1000) })
-        .then(res => res.json())
-        .then(json => {
-            readings[sensor.device_name] = { status: 200, content: json, name: sensor.device_name, };
-            publishReadings(readings[sensor.device_name]);
-        })
-        .catch(e => {
-            if (e instanceof AbortError) {
-                readings[sensor.device_name] = { status: 504, content: `sensor API not reachable at ${sensorUrl}`, name: sensor.device_name, };
-            } else {
-                readings[sensor.device_name] = { status: 500, content: e, name: sensor.device_name, };
-            }
-        });
+        fetch(sensorUrl, { method: "GET", signal: timeoutSignal(sensorQueryTimeout) })
+            .then(res => res.json())
+            .then(json => {
+                readings[sensor.device_name] = { status: 200, content: json, name: sensor.device_name, };
+                lastReading = Date.now();
+                publishReadings(readings[sensor.device_name]);
+            })
+            .catch(e => {
+                if (e instanceof AbortError) {
+                    readings[sensor.device_name] = { status: 504, content: `sensor API not reachable at ${sensorUrl}`, name: sensor.device_name, };
+                } else {
+                    readings[sensor.device_name] = { status: 500, content: e, name: sensor.device_name, };
+                }
+            });
     }
 }, config.sensors.query_interval);
 
