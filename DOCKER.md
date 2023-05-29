@@ -1,4 +1,9 @@
-# 🏘neurio ➡️ MQTT📡 ![GitHub Release Date](https://img.shields.io/github/release-date/hanseartic/neurio-2-mqtt?style=flat-square)
+# 🏘neurio ➡️ MQTT
+
+[![source on github](https://img.shields.io/badge/source%20on%20github-181717?style=flat-square&logo=github&logoColor=white)](https://github.com/hanseartic/neurio-2-mqtt/)
+[![dockerhub](https://img.shields.io/badge/docker%20hub-2496ED?style=flat-square&logo=docker&logoColor=white)](https://hub.docker.com/r/hanseartic/neurio-2-mqtt)
+[![ghcr](https://img.shields.io/badge/ghcr.io-181717?style=flat-square&logo=docker&logoColor=white)](https://ghcr.io/hanseartic/neurio-2-mqtt:latest)
+![GitHub Release Date](https://img.shields.io/github/release-date/hanseartic/neurio-2-mqtt?style=flat-square)
 
 Publish readings from local neurio sensor API sensor to a MQTT broker.
 
@@ -60,3 +65,9 @@ The bridge provides two REST endpoints:
 
 - `localhost:8080/discovery` listing of all discovery topics
 - `localhost:8080/readings` current sample from all configured sensors
+
+---
+
+[![homeassistant](https://img.shields.io/badge/home%20assistant-41BDF5?style=for-the-badge&logo=homeassistant&logoColor=white)](https://www.home-assistant.io/)
+[![mosquitto](https://img.shields.io/badge/mosquitto-3C5280?style=for-the-badge&logo=eclipsemosquitto&logoColor=white)](https://mosquitto.org/)
+[![MQTT](https://img.shields.io/badge/MQTT-660066?style=for-the-badge&logo=MQTT&logoColor=white)](https://mqtt.org)

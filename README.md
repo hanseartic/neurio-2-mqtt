@@ -1,4 +1,9 @@
-# 🏘neurio ➡️ MQTT📡
+# 🏘neurio ➡️ MQTT
+
+[![source on github](https://img.shields.io/badge/source%20on%20github-181717?style=flat-square&logo=github&logoColor=white)](https://github.com/hanseartic/neurio-2-mqtt/)
+[![dockerhub](https://img.shields.io/badge/docker%20hub-2496ED?style=flat-square&logo=docker&logoColor=white)](https://hub.docker.com/r/hanseartic/neurio-2-mqtt)
+[![ghcr](https://img.shields.io/badge/ghcr.io-181717?style=flat-square&logo=docker&logoColor=white)](https://ghcr.io/hanseartic/neurio-2-mqtt:latest)
+![GitHub Release Date](https://img.shields.io/github/release-date/hanseartic/neurio-2-mqtt?style=flat-square)
 
 Publish readings from local neurio sensor API sensor to a
 [MQTT](https://mqtt.org/) broker.
@@ -47,7 +52,7 @@ Read to the next section where and how to find that custom config file.
 First get ahold of the default configuration via:
 
 ```bash
-docker run --rm -v $(pwd)/config:/app/config hanseartic/neurio_2_mqtt init
+docker run --rm -v $(pwd)/config:/app/config hanseartic/neurio-2-mqtt init
 ```
 
 You will now find a copy of the default config in `config/local.toml`.
@@ -68,7 +73,7 @@ host = "10.0.0.100"
 Now run the bridge:
 
 ```bash
-docker run --rm --name neurio_2_mqtt -dv $(pwd)/config:/app/config:ro hanseartic/neurio_2_mqtt
+docker run --rm --name neurio-2-mqtt -dv $(pwd)/config:/app/config:ro hanseartic/neurio-2-mqtt
 ```
 
 ### 💻 Local bridge
@@ -77,8 +82,8 @@ Running locally with node is only advised while setting up or figuring out your
 configuration.
 
 ```bash
-git clone https://github.com/hanseartic/neurio_2_mqtt.git
-cd neurio_2_mqtt/app
+git clone https://github.com/hanseartic/neurio-2-mqtt.git
+cd neurio-2-mqtt/app
 npm ci
 ```
 
@@ -103,7 +108,7 @@ process.
 docker (given you started with the `--name` used above):
 
 ```bash
-docker kill -s USR1 neurio_2_mqtt
+docker kill -s USR1 neurio-2-mqtt
 ```
 
 To send the signal to local instance you need to find the process id and then
