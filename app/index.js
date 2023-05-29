@@ -34,7 +34,7 @@ app.get('/discovery', (_, res) => {
     generateDiscoveryTopics().then(t => res.send(t));
 });
 
-app.get('/healthcheck', () => {
+app.get('/healthcheck', (_, res) => {
     const readingAge = Date.now() - lastReading;
     if (readingAge > config.sensors.query_interval + sensorQueryTimeout) {
         res.status(500).send();
