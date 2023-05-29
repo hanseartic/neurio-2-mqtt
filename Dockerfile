@@ -1,10 +1,9 @@
 FROM node:lts-alpine
 
 RUN npm install -g npm@latest
-
 WORKDIR /app
-COPY app/ /app/
-RUN npm ci
+COPY app/package*.json /app/
+RUN npm ci --omit dev --ignore-scripts
 
 EXPOSE 8080
 
@@ -14,3 +13,5 @@ HEALTHCHECK --interval=3s --timeout=1s --start-period=3s --retries=3 \
 
 ENTRYPOINT [ "node" ]
 CMD [ "index.js" ]
+
+COPY app/ /app/

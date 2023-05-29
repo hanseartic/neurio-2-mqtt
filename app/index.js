@@ -36,15 +36,15 @@ app.get('/discovery', (_, res) => {
 
 app.get('/healthcheck', (_, res) => {
     const readingAge = Date.now() - lastReading;
+    const response = { readingAge, toleratedAge: config.sensors.query_interval + sensorQueryTimeout };
     if (readingAge > config.sensors.query_interval + sensorQueryTimeout) {
-        res.status(500).send();
+        res.status(500);
+        response.status = 'failed';
     } else {
-        res.status(200).send({ readingAge });
+        res.status(200);
+        response.status = 'ok';
     }
-});
-
-app.listen(config.bridge.port, () => {
-    console.log('listening on ' + config.bridge.port);
+    res.send(response);
 });
 
 
@@ -147,13 +147,14 @@ const generateDiscoveryTopics = async () => {
 };
 
 let lastReading = 0;
-const requestLoop = setInterval(() => {
+const requestLoop = async () => {
+    const sensorQueries = [];
     for (const sensorId in config.sensors) {
         const sensor = config.sensors[sensorId];
         if (typeof sensor !== 'object') { continue; }
         delete readings[sensor.device_name];
         const sensorUrl = `http://${sensor.host}/current-sample`;
-        fetch(sensorUrl, { method: "GET", signal: timeoutSignal(sensorQueryTimeout) })
+        sensorQueries.push(fetch(sensorUrl, { method: "GET", signal: timeoutSignal(sensorQueryTimeout) })
             .then(res => res.json())
             .then(json => {
                 readings[sensor.device_name] = { status: 200, content: json, name: sensor.device_name, };
@@ -166,9 +167,13 @@ const requestLoop = setInterval(() => {
                 } else {
                     readings[sensor.device_name] = { status: 500, content: e, name: sensor.device_name, };
                 }
-            });
+            }));
     }
-}, config.sensors.query_interval);
+    await Promise.all(sensorQueries);
+    if (config.sensors.query_interval) {
+        setTimeout(requestLoop, config.sensors.query_interval);
+    }
+};
 
 
 let configChangedTs = Date.now();
@@ -189,6 +194,11 @@ const getMQTTClient = () => {
     return connect(`${config.mqtt.proto}://${config.mqtt.host}:${config.mqtt.port}`, clientOptions);
 }
 
+app.listen(config.bridge.port, () => {
+    console.log('listening on ' + config.bridge.port);
+    requestLoop();
+});
+
 process.on('SIGUSR1', () => {
     generateDiscoveryTopics().then(t => {
         if (!t) { return; }
@@ -204,8 +214,11 @@ process.on('SIGUSR1', () => {
     });
 });
 
-process.on('SIGINT', () => {
-    clearInterval(requestLoop);
+const terminate = () => {
     console.log("bye");
     process.exit();
-});
+};
+
+process
+    .on('SIGINT', terminate)
+    .on('SIGTERM', terminate);
