@@ -8,6 +8,7 @@ process.env.NODE_CONFIG_DIR = __dirname + '/config/'
     + __dirname + '/defaultConfig/';
 
 import { stringify } from '@tauri-apps/toml';
+import humanDate from 'humanize-duration';
 import configUncached from 'config-reloadable';
 import express from 'express';
 import fetch, { AbortError } from 'node-fetch';
@@ -36,7 +37,11 @@ app.get('/discovery', (_, res) => {
 
 app.get('/healthcheck', (_, res) => {
     const readingAge = Date.now() - lastReading;
-    const response = { readingAge, toleratedAge: config.sensors.query_interval + sensorQueryTimeout };
+    const response = {
+        readingAge,
+        toleratedAge: config.sensors.query_interval + sensorQueryTimeout,
+        uptime: humanDate(process.uptime() * 1000, { maxDecimalPoints: 0 }),
+    };
     if (readingAge > config.sensors.query_interval + sensorQueryTimeout) {
         res.status(500);
         response.status = 'failed';
