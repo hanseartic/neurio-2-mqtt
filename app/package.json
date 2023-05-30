@@ -1,6 +1,6 @@
 {
-  "name": "generac_mqtt_bridge",
-  "description": "Bridge from generac json messages to MQTT",
+  "name": "neurio_2_mqtt",
+  "description": "Bridge from neurio json messages to MQTT",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
@@ -15,7 +15,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/hanseartic/generac_mqtt_bridge.git",
+    "url": "https://github.com/hanseartic/neurio-2-mqtt.git",
     "directory": "app"
   },
   "type": "module",
