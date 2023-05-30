@@ -5,54 +5,27 @@
 [![ghcr](https://img.shields.io/badge/ghcr.io-181717?style=flat-square&logo=docker&logoColor=white)](https://ghcr.io/hanseartic/neurio-2-mqtt:latest)
 ![GitHub Release Date](https://img.shields.io/github/release-date/hanseartic/neurio-2-mqtt?style=flat-square)
 
-Publish readings from local neurio sensor API sensor to a
-[MQTT](https://mqtt.org/) broker.
-
-## 📰 TL;DR
-
-neurio (aka Generac PWRview) sensors provide a local JSON API that allows direct
-reading of the sensor data without using the
-[generac cloud](mypwrview.generac.com).
-
-This bridge publishes these local readings to a MQTT broker.
+Publish readings from local neurio sensor API sensor to a MQTT broker.
 
 ## ⚙️ Configuration
 
-The bridge can be run as a **docker container** or **locally** using node
-directly.
-
-Either way the bridge needs to be configured. A default configuration is in
-place to provide defaults where applicable.
-
 Configuration is stored in [`.toml`](https://toml.io/en/)-files. There is a
 [default configuration](app/defaultConfig/default.toml) file that should not be
-changed but provides basic settings.
+changed but provides basic settings (e.g. device-name, topics, ...).
 
 Most settings can be kept as is but at least the connections to MQTT and the
 neurio sensor need customization. Settings stored in `app/config/local.toml`
 override settings in the [default configuration](app/defaultConfig/default.toml)
 file.
 
-So a minimal `local.toml` file could look like this:
+To customize the configuration first get ahold of the default configuration via:
 
-```toml
-[sensors.1]
-host = "10.0.0.101"
-
-[mqtt]
-host = "10.0.0.100"
-```
-
-Read to the next section where and how to find that custom config file.
-
-## Running the bridge
-
-### 🐳 Docker
-
-First get ahold of the default configuration via:
-
-```bash
-docker run --rm -v $(pwd)/config:/app/config hanseartic/neurio-2-mqtt init
+```shell
+docker run \
+  --rm \
+  -v $(pwd)/config:/app/config \
+  hanseartic/neurio-2-mqtt \
+  init
 ```
 
 You will now find a copy of the default config in `config/local.toml`.
@@ -63,66 +36,51 @@ when running with docker.
 So a minimal `local.toml` file could look like this:
 
 ```toml
-[sensors.1]
+[sensors.neurio]
 host = "10.0.0.101"
 
 [mqtt]
 host = "10.0.0.100"
 ```
 
-Now run the bridge:
+## ➡️ Running the bridge
 
-```bash
-docker run --rm --name neurio-2-mqtt -dv $(pwd)/config:/app/config:ro hanseartic/neurio-2-mqtt
+After configuration has been customized just start forwarding the sensor
+readings with the following command:
+
+```shell
+docker run -d \
+  --rm \
+  --name neurio-2-mqtt \
+  -p8080:8080 \
+  --restart always \
+  -v $(pwd)/config:/app/config:ro \
+  hanseartic/neurio-2-mqtt
 ```
 
-### 💻 Local bridge
-
-Running locally with node is only advised while setting up or figuring out your
-configuration.
-
-```bash
-git clone https://github.com/hanseartic/neurio-2-mqtt.git
-cd neurio-2-mqtt/app
-npm ci
-```
-
-Now you need to configure the connection to the sensor and your MQTT broker. See
-in the above **docker** section for details.
-
-Start locally
-
-```bash
-npm start
-## or
-node index.js
-```
-
-## Homeassistant discovery
+## 👀 Homeassistant discovery
 
 The bridge supports homeassistant
 [MQTT discovery](https://www.home-assistant.io/integrations/mqtt/#mqtt-discovery).
 To publish discovery topics to the MQTT broker send a `USR1` signal to the
-process.
+process:
 
-docker (given you started with the `--name` used above):
-
-```bash
+```shell
 docker kill -s USR1 neurio-2-mqtt
 ```
 
-To send the signal to local instance you need to find the process id and then
+## 🧩 API
 
-```bash
-kill -USR1 <pid of node index.js>
-```
+The bridge provides two REST endpoints:
 
-## API
+- `GET /discovery` listing of all discovery topics
+- `GET /healthcheck` healthcheck endpoint returning 200 when the last reading is
+  not older than configured update interval; this is also checked by docker for
+  healthyness probes
+- `GET /readings` current sample from all configured sensors
 
-The bridge provides two REST endpoints. After the bridge was started find them
-at
+---
 
-- `localhost:8080/discovery` listing of all discovery topics
-- `localhost:8080/healthcheck` healthcheck endpoint returning 200 when the last
-  reading is not older than configured update interval
-- `localhost:8080/readings` current sample from all configured sensors
+[![homeassistant](https://img.shields.io/badge/home%20assistant-41BDF5?style=for-the-badge&logo=homeassistant&logoColor=white)](https://www.home-assistant.io/)
+[![mosquitto](https://img.shields.io/badge/mosquitto-3C5280?style=for-the-badge&logo=eclipsemosquitto&logoColor=white)](https://mosquitto.org/)
+[![MQTT](https://img.shields.io/badge/MQTT-660066?style=for-the-badge&logo=MQTT&logoColor=white)](https://mqtt.org)

@@ -58,25 +58,25 @@ const publishReadings = async (readings) => {
     for (const channel of readings.content.channels) {
         const type = channel.type.replace('_CONSUMPTION', '');
         //console.log(`publishing to '${config.mqtt.topic}/${readings.name}/${type}/state'`, channel);
-        c.publish(`${config.mqtt.topic}/${readings.name}/${type}/state`, JSON.stringify(channel));
+        c.publish(`${config.mqtt.topic}/${readings.content.sensorId}/${type}/state`, JSON.stringify(channel));
     }
 };
 
 const generateDiscoveryTopics = async () => {
     const topics = {};
 
-    for (const sensorId in config.sensors) {
-        const sensor = config.sensors[sensorId];
+    for (const sensorName in config.sensors) {
+        const sensor = config.sensors[sensorName];
         if (typeof sensor !== 'object') { continue; }
-        const sensorReadings = readings[sensor.device_name];
+        const sensorReadings = readings[sensorName];
         if (!sensorReadings) { continue; }
 
         const dev = {
             name: sensorReadings.name,
             ids: sensorReadings.content.sensorId,
-            mdl: 'neurio',
-            cu: `http://${sensor.host}`,
-            mf: 'Generac',
+            model: sensorReadings.model,
+            configuration_url: `http://${sensor.host}`,
+            manufacturer: 'Generac',
         };
         await fetch(`http://${sensor.host}`, { method: 'GET', signal: timeoutSignal(1500) })
             .then(res => res.text())
@@ -89,58 +89,59 @@ const generateDiscoveryTopics = async () => {
                         a[k_v[0]] = k_v[1];
                         return a;
                     }, {});
-                dev.hw = lines['Hardware Version'];
-                dev.sw = lines['Firmware Version'];
-            });
+                dev.hw_version = lines['Hardware Version'];
+                dev.sw_version = lines['Firmware Version'];
+            })
+            .catch(() => {});
 
-        const id = sensor.device_name;
+        const id = sensorReadings.content.sensorId;
 
         const sensorTopics = sensorReadings.content.channels.reduce((a, b) => {
             const type = b.type.replace('_CONSUMPTION', '');
 
             a[`${config.homeassistant.discovery_topic}/sensor/neurio-${sensorReadings.content.sensorId}/${type}_eImp_Wh`] = {
-                name: `${id} ${type} In`,
-                uniq_id: `${sensorReadings.content.sensorId}_${b.ch}_eImp_Wh`,
-                stat_t: `${config.mqtt.topic}/${id}/${type}/state`,
-                val_tpl: '{{ value_json.eImp_Ws // 3600 }}',
-                unit_of_meas: 'Wh',
+                name: `${sensorReadings.name} ${type} In`,
+                unique_id: `${sensorReadings.content.sensorId}_${b.ch}_eImp_Wh`,
+                state_topic: `${config.mqtt.topic}/${id}/${type}/state`,
+                value_template: '{{ value_json.eImp_Ws // 3600 }}',
+                unit_of_measurement: 'Wh',
                 dev,
-                dev_cla: 'energy',
-                stat_cla: 'total_increasing',
-                exp_aft: 5,
+                device_class: 'energy',
+                state_class: 'total_increasing',
+                expire_after: 5,
             };
             a[`${config.homeassistant.discovery_topic}/sensor/neurio-${sensorReadings.content.sensorId}/${type}_eExp_Wh`] = {
-                name: `${id} ${type} Out`,
-                uniq_id: `${sensorReadings.content.sensorId}_${b.ch}_eExp_Wh`,
-                stat_t: `${config.mqtt.topic}/${id}/${type}/state`,
-                val_tpl: '{{ value_json.eExp_Ws // 3600 }}',
-                unit_of_meas: 'Wh',
+                name: `${sensorReadings.name} ${type} Out`,
+                unique_id: `${sensorReadings.content.sensorId}_${b.ch}_eExp_Wh`,
+                state_topic: `${config.mqtt.topic}/${id}/${type}/state`,
+                value_template: '{{ value_json.eExp_Ws // 3600 }}',
+                unit_of_measurement: 'Wh',
                 dev,
-                exp_aft: 5,
-                dev_cla: 'energy',
-                stat_cla: 'total_increasing',
+                expire_after: 5,
+                device_class: 'energy',
+                state_class: 'total_increasing',
             };
             a[`${config.homeassistant.discovery_topic}/sensor/neurio-${sensorReadings.content.sensorId}/${type}_p_W`] = {
-                name: `${id} ${type} Watt`,
-                uniq_id: `${sensorReadings.content.sensorId}_${b.ch}_p_W`,
-                stat_t: `${config.mqtt.topic}/${id}/${type}/state`,
-                val_tpl: '{{ value_json.p_W }}',
-                unit_of_meas: 'W',
+                name: `${sensorReadings.name} ${type} Watt`,
+                unique_id: `${sensorReadings.content.sensorId}_${b.ch}_p_W`,
+                state_topic: `${config.mqtt.topic}/${id}/${type}/state`,
+                value_template: '{{ value_json.p_W }}',
+                unit_of_measurement: 'W',
                 dev,
-                exp_aft: 5,
-                dev_cla: 'power',
-                stat_cla: 'measurement',
+                expire_after: 5,
+                device_class: 'power',
+                state_class: 'measurement',
             };
             a[`${config.homeassistant.discovery_topic}/sensor/neurio-${sensorReadings.content.sensorId}/${type}_v_V`] = {
-                name: `${id} ${type} Volt`,
-                uniq_id: `${sensorReadings.content.sensorId}_${b.ch}_v_V`,
-                stat_t: `${config.mqtt.topic}/${id}/${type}/state`,
-                val_tpl: '{{ value_json.v_V }}',
-                unit_of_meas: 'V',
+                name: `${sensorReadings.name} ${type} Volt`,
+                unique_id: `${sensorReadings.content.sensorId}_${b.ch}_v_V`,
+                state_topic: `${config.mqtt.topic}/${id}/${type}/state`,
+                value_template: '{{ value_json.v_V }}',
+                unit_of_measurement: 'V',
                 dev,
-                exp_aft: 5,
-                dev_cla: 'voltage',
-                stat_cla: 'measurement',
+                expire_after: 5,
+                device_class: 'voltage',
+                state_class: 'measurement',
             };
             return a;
         }, {});
@@ -154,23 +155,24 @@ const generateDiscoveryTopics = async () => {
 let lastReading = 0;
 const requestLoop = async () => {
     const sensorQueries = [];
-    for (const sensorId in config.sensors) {
-        const sensor = config.sensors[sensorId];
-        if (typeof sensor !== 'object') { continue; }
-        delete readings[sensor.device_name];
-        const sensorUrl = `http://${sensor.host}/current-sample`;
+    for (const sensorName in config.sensors) {
+        const sensorConfig = config.sensors[sensorName];
+        if (typeof sensorConfig !== 'object') { continue; }
+        delete readings[sensorName];
+        const sensorUrl = `http://${sensorConfig.host}/current-sample`;
+        const currentSensor = { name: sensorName, model: sensorConfig.device_model };
         sensorQueries.push(fetch(sensorUrl, { method: "GET", signal: timeoutSignal(sensorQueryTimeout) })
             .then(res => res.json())
             .then(json => {
-                readings[sensor.device_name] = { status: 200, content: json, name: sensor.device_name, };
+                readings[sensorName] = { status: 200, content: json, ...currentSensor };
                 lastReading = Date.now();
-                publishReadings(readings[sensor.device_name]);
+                publishReadings(readings[sensorName]);
             })
             .catch(e => {
                 if (e instanceof AbortError) {
-                    readings[sensor.device_name] = { status: 504, content: `sensor API not reachable at ${sensorUrl}`, name: sensor.device_name, };
+                    readings[sensorName] = { status: 504, content: `sensor API not reachable at ${sensorUrl}`, ...currentSensor };
                 } else {
-                    readings[sensor.device_name] = { status: 500, content: e, name: sensor.device_name, };
+                    readings[sensorName] = { status: 500, content: e, ...currentSensor };
                 }
             }));
     }
@@ -213,7 +215,7 @@ process.on('SIGUSR1', () => {
         c.on('connect', () => {
             Object.keys(t).forEach(k => {
                 console.log(`${k}/config`);
-                c.publish(`${k}/config`, JSON.stringify(t[k]));
+                c.publish(`${k}/config`, JSON.stringify(t[k]), { qos: 0, retain: true });
             })
          });
     });
