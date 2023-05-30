@@ -4,9 +4,9 @@ port = 8080
 [sensors]
 query_interval = 1000
 
-[sensors.1]
+[sensors.neurio]
 host = "neurio.local"
-device_name = "PWRview"
+device_model = "PWRview"
 
 [mqtt]
 proto = "mqtt"

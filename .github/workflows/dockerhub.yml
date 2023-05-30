@@ -15,6 +15,6 @@ jobs:
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
-        readme-filepath: ./DOCKER.md
+        readme-filepath: ./README.md
         short-description: ${{ github.event.repository.description }}
         enable-url-completion: true
