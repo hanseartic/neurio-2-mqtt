@@ -100,7 +100,7 @@ const generateDiscoveryTopics = async () => {
             const type = b.type.replace('_CONSUMPTION', '');
 
             a[`${config.homeassistant.discovery_topic}/sensor/neurio-${sensorReadings.content.sensorId}/${type}_eImp_Wh`] = {
-                name: `${sensorReadings.name} ${type} In`,
+                name: `${sensorReadings.name} ${type.replace('_', ' ')} Energy In`,
                 unique_id: `${sensorReadings.content.sensorId}_${b.ch}_eImp_Wh`,
                 state_topic: `${config.mqtt.topic}/${id}/${type}/state`,
                 value_template: '{{ value_json.eImp_Ws // 3600 }}',
@@ -109,9 +109,10 @@ const generateDiscoveryTopics = async () => {
                 device_class: 'energy',
                 state_class: 'total_increasing',
                 expire_after: 5,
+                icon: 'mdi:transmission-tower-export',
             };
             a[`${config.homeassistant.discovery_topic}/sensor/neurio-${sensorReadings.content.sensorId}/${type}_eExp_Wh`] = {
-                name: `${sensorReadings.name} ${type} Out`,
+                name: `${sensorReadings.name} ${type.replace('_', ' ')} Energy Out`,
                 unique_id: `${sensorReadings.content.sensorId}_${b.ch}_eExp_Wh`,
                 state_topic: `${config.mqtt.topic}/${id}/${type}/state`,
                 value_template: '{{ value_json.eExp_Ws // 3600 }}',
@@ -120,9 +121,10 @@ const generateDiscoveryTopics = async () => {
                 expire_after: 5,
                 device_class: 'energy',
                 state_class: 'total_increasing',
+                icon: 'mdi:transmission-tower-import',
             };
             a[`${config.homeassistant.discovery_topic}/sensor/neurio-${sensorReadings.content.sensorId}/${type}_p_W`] = {
-                name: `${sensorReadings.name} ${type} Watt`,
+                name: `${sensorReadings.name} ${type.replace('_', ' ')} Power`,
                 unique_id: `${sensorReadings.content.sensorId}_${b.ch}_p_W`,
                 state_topic: `${config.mqtt.topic}/${id}/${type}/state`,
                 value_template: '{{ value_json.p_W }}',
@@ -133,7 +135,7 @@ const generateDiscoveryTopics = async () => {
                 state_class: 'measurement',
             };
             a[`${config.homeassistant.discovery_topic}/sensor/neurio-${sensorReadings.content.sensorId}/${type}_v_V`] = {
-                name: `${sensorReadings.name} ${type} Volt`,
+                name: `${sensorReadings.name} ${type.replace('_', ' ')} Voltage`,
                 unique_id: `${sensorReadings.content.sensorId}_${b.ch}_v_V`,
                 state_topic: `${config.mqtt.topic}/${id}/${type}/state`,
                 value_template: '{{ value_json.v_V }}',
@@ -142,6 +144,18 @@ const generateDiscoveryTopics = async () => {
                 expire_after: 5,
                 device_class: 'voltage',
                 state_class: 'measurement',
+            };
+            a[`${config.homeassistant.discovery_topic}/sensor/neurio-${sensorReadings.content.sensorId}/${type}_q_VAR`] = {
+                name: `${sensorReadings.name} ${type.replace('_', ' ')} Reactive Power`,
+                unique_id: `${sensorReadings.content.sensorId}_${b.ch}_q_VAR`,
+                state_topic: `${config.mqtt.topic}/${id}/${type}/state`,
+                value_template: '{{ value_json.q_VAR }}',
+                unit_of_measurement: 'var',
+                dev,
+                expire_after: 5,
+                device_class: 'power',
+                state_class: 'measurement',
+                icon: 'mdi:flash-outline',
             };
             return a;
         }, {});
