@@ -3,7 +3,8 @@
 [![source on github](https://img.shields.io/badge/source%20on%20github-181717?style=flat-square&logo=github&logoColor=white)](https://github.com/hanseartic/neurio-2-mqtt/)
 [![dockerhub](https://img.shields.io/badge/docker%20hub-2496ED?style=flat-square&logo=docker&logoColor=white)](https://hub.docker.com/r/hanseartic/neurio-2-mqtt)
 [![ghcr](https://img.shields.io/badge/ghcr.io-181717?style=flat-square&logo=docker&logoColor=white)](https://ghcr.io/hanseartic/neurio-2-mqtt:latest)
-![GitHub Release Date](https://img.shields.io/github/release-date/hanseartic/neurio-2-mqtt?style=flat-square)
+![version](https://img.shields.io/docker/v/hanseartic/neurio-2-mqtt?label=%20&style=flat-square)
+![GitHub Release Date](https://img.shields.io/github/release-date/hanseartic/neurio-2-mqtt?style=flat-square&label=released)
 
 Publish readings from local neurio sensor API sensor to a MQTT broker.
 
