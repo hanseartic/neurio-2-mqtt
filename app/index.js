@@ -175,12 +175,12 @@ const requestLoop = async () => {
         delete readings[sensorName];
         const sensorUrl = `http://${sensorConfig.host}/current-sample`;
         const currentSensor = { name: sensorName, model: sensorConfig.device_model };
+
         sensorQueries.push(fetch(sensorUrl, { method: "GET", signal: timeoutSignal(sensorQueryTimeout) })
             .then(res => res.json())
             .then(json => {
                 readings[sensorName] = { status: 200, content: json, ...currentSensor };
                 lastReading = Date.now();
-                publishReadings(readings[sensorName]);
             })
             .catch(e => {
                 if (e instanceof AbortError) {
@@ -188,9 +188,26 @@ const requestLoop = async () => {
                 } else {
                     readings[sensorName] = { status: 500, content: e, ...currentSensor };
                 }
-            }));
+            })
+            .then(() => {
+                return readings[sensorName];
+            })
+        );
     }
-    await Promise.all(sensorQueries);
+
+    Promise
+        .all(sensorQueries)
+        .then(readings => {
+            for (const reading of readings) {
+                if (reading.status === 200) {
+                    publishReadings(reading);
+                } else {
+                    console.log(reading);
+                }
+            }
+        })
+        .catch(console.log);
+
     if (config.sensors.query_interval) {
         setTimeout(requestLoop, config.sensors.query_interval);
     }
