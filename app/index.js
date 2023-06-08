@@ -153,7 +153,7 @@ const generateDiscoveryTopics = async () => {
                 unit_of_measurement: 'var',
                 dev,
                 expire_after: 5,
-                device_class: 'power',
+                device_class: 'reactive_power',
                 state_class: 'measurement',
                 icon: 'mdi:flash-outline',
             };
