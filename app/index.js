@@ -58,6 +58,10 @@ const publishReadings = async (reading) => {
         //console.log(`publishing to '${config.mqtt.topic}/${readings.name}/${type}/state'`, channel);
         c.publish(`${config.mqtt.topic}/${reading.content.sensorId}/${type}/state`, JSON.stringify(channel));
     }
+    c.publish(`${config.mqtt.topic}/${reading.content.sensorId}/state`, JSON.stringify({
+        status: reading.status,
+        last_update: reading.content.timestamp,
+    }));
 };
 
 const getSensors = () => {
@@ -86,6 +90,7 @@ const generateDiscoveryTopics = async () => {
             model: sensorReadings.model,
             configuration_url: `http://${sensor.config.host}`,
             manufacturer: 'Generac',
+            via_device: 'neurio-2-mqtt'
         };
         await fetch(`http://${sensor.config.host}`, { method: 'GET', signal: timeoutSignal(1500) })
             .then(res => res.text())
@@ -104,6 +109,10 @@ const generateDiscoveryTopics = async () => {
             .catch(() => {});
 
         const id = sensorReadings.content.sensorId;
+        const availability = {
+            topic: `${config.mqtt.topic}/${id}/state`,
+            value_template: "{{ 'online' if value_json.status == 200 else 'offline' }}",
+        };
 
         const sensorTopics = sensorReadings.content.channels.reduce((a, b) => {
             const type = b.type.replace('_CONSUMPTION', '');
@@ -115,9 +124,10 @@ const generateDiscoveryTopics = async () => {
                 value_template: '{{ value_json.eImp_Ws // 3600 }}',
                 unit_of_measurement: 'Wh',
                 dev,
+                availability,
                 device_class: 'energy',
                 state_class: 'total_increasing',
-                expire_after: 5,
+                expire_after: 95,
                 icon: 'mdi:transmission-tower-export',
             };
             a[`${config.homeassistant.discovery_topic}/sensor/neurio-${sensorReadings.content.sensorId}/${type}_eExp_Wh`] = {
@@ -127,7 +137,8 @@ const generateDiscoveryTopics = async () => {
                 value_template: '{{ value_json.eExp_Ws // 3600 }}',
                 unit_of_measurement: 'Wh',
                 dev,
-                expire_after: 5,
+                availability,
+                expire_after: 95,
                 device_class: 'energy',
                 state_class: 'total_increasing',
                 icon: 'mdi:transmission-tower-import',
@@ -139,7 +150,8 @@ const generateDiscoveryTopics = async () => {
                 value_template: '{{ value_json.p_W }}',
                 unit_of_measurement: 'W',
                 dev,
-                expire_after: 5,
+                availability,
+                expire_after: 95,
                 device_class: 'power',
                 state_class: 'measurement',
             };
@@ -150,7 +162,8 @@ const generateDiscoveryTopics = async () => {
                 value_template: '{{ value_json.v_V }}',
                 unit_of_measurement: 'V',
                 dev,
-                expire_after: 5,
+                availability,
+                expire_after: 95,
                 device_class: 'voltage',
                 state_class: 'measurement',
             };
@@ -161,7 +174,8 @@ const generateDiscoveryTopics = async () => {
                 value_template: '{{ value_json.q_VAR }}',
                 unit_of_measurement: 'var',
                 dev,
-                expire_after: 5,
+                availability,
+                expire_after: 95,
                 device_class: 'reactive_power',
                 state_class: 'measurement',
                 icon: 'mdi:flash-outline',
