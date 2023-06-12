@@ -27,7 +27,7 @@ console.log(customConfig);
 const app = express();
 const sensorQueryTimeout = 500;
 
-app.get('/readings', (req, res) => {
+app.get('/readings', (_, res) => {
     res.status(200).send(readings);
 });
 
@@ -42,43 +42,52 @@ app.get('/healthcheck', (_, res) => {
         toleratedAge: config.sensors.query_interval + sensorQueryTimeout,
         uptime: humanDate(process.uptime() * 1000, { maxDecimalPoints: 0 }),
     };
-    if (readingAge > config.sensors.query_interval + sensorQueryTimeout) {
-        res.status(500);
-        response.status = 'failed';
-    } else {
-        res.status(200);
-        response.status = 'ok';
-    }
-    res.send(response);
+    response.sensors = getSensors().reduce((a, b) => {
+        const status = (b.readings?.status ?? 500) == 200 ? "OK" : "N/A";
+        return { ...a, [b.name]: { status: status } };
+    }, {});
+
+    res.status(200).send(response);
 });
 
 
-const publishReadings = async (readings) => {
+const publishReadings = async (reading) => {
     const c = getMQTTClient();
-    for (const channel of readings.content.channels) {
+    for (const channel of reading.content.channels) {
         const type = channel.type.replace('_CONSUMPTION', '');
         //console.log(`publishing to '${config.mqtt.topic}/${readings.name}/${type}/state'`, channel);
-        c.publish(`${config.mqtt.topic}/${readings.content.sensorId}/${type}/state`, JSON.stringify(channel));
+        c.publish(`${config.mqtt.topic}/${reading.content.sensorId}/${type}/state`, JSON.stringify(channel));
     }
+};
+
+const getSensors = () => {
+    const sensors = [];
+    for (const sensorName in config.sensors) {
+        const sensorConfig = config.sensors[sensorName];
+        if (typeof sensorConfig !== 'object') { continue; }
+        const sensor = { name: sensorName, config: sensorConfig };
+        const sensorReadings = readings[sensorName];
+        if (sensorReadings) {
+            sensor.readings = sensorReadings;
+        }
+        sensors.push(sensor);
+    }
+    return sensors;
 };
 
 const generateDiscoveryTopics = async () => {
     const topics = {};
 
-    for (const sensorName in config.sensors) {
-        const sensor = config.sensors[sensorName];
-        if (typeof sensor !== 'object') { continue; }
-        const sensorReadings = readings[sensorName];
-        if (!sensorReadings) { continue; }
-
+    for (const sensor of getSensors()) {
+        const sensorReadings = sensor.readings;
         const dev = {
             name: sensorReadings.name,
             ids: sensorReadings.content.sensorId,
             model: sensorReadings.model,
-            configuration_url: `http://${sensor.host}`,
+            configuration_url: `http://${sensor.config.host}`,
             manufacturer: 'Generac',
         };
-        await fetch(`http://${sensor.host}`, { method: 'GET', signal: timeoutSignal(1500) })
+        await fetch(`http://${sensor.config.host}`, { method: 'GET', signal: timeoutSignal(1500) })
             .then(res => res.text())
             .then(text => {
                 const lines = parse(text).querySelector('.col-sm-6').innerHTML
