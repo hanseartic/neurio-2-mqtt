@@ -7,9 +7,8 @@ RUN npm i --omit dev --ignore-scripts
 
 EXPOSE 8080
 
-RUN apk --no-cache add curl
-HEALTHCHECK --interval=3s --timeout=1s --start-period=3s --retries=3 \
-    CMD curl --silent --fail http://localhost:8080/healthcheck || exit 1
+HEALTHCHECK --interval=5s --timeout=3s --start-period=10s --retries=3 \
+    CMD wget http://localhost:8080/healthcheck -q -O -
 
 ENTRYPOINT [ "node" ]
 CMD [ "index.js" ]
