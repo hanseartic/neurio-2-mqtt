@@ -1,9 +1,9 @@
 FROM node:lts-alpine
 
-RUN npm install -g npm@latest
+ENV NPM_CONFIG_UPDATE_NOTIFIER=false
 WORKDIR /app
 COPY app/package*.json /app/
-RUN npm ci --omit dev --ignore-scripts
+RUN npm i --omit dev --ignore-scripts
 
 EXPOSE 8080
 
