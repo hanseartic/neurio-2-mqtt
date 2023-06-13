@@ -14,3 +14,6 @@ ENTRYPOINT [ "node" ]
 CMD [ "index.js" ]
 
 COPY app/ /app/
+
+ARG version="0"
+ENV VERSION=$version
