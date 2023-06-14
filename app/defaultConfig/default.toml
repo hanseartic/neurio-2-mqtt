@@ -14,7 +14,7 @@ host = "mqtt.local"
 port = 1883
 user = ""
 password = ""
-topic = "neurio"
+topic = "neurio2mqtt"
 
 [homeassistant]
 discovery_topic = "homeassistant"
