@@ -190,7 +190,7 @@ const generateDiscoveryTopics = async () => {
         for (const topic in sensorTopics) {
             topics[topic] = sensorTopics[topic];
         };
-        topics[`${config.homeassistant.discovery_topic}/binary_sensor/neurio-${sensorReadings.content.sensorId}_available/config`] = {
+        topics[`${config.homeassistant.discovery_topic}/binary_sensor/neurio-${sensorReadings.content.sensorId}_available`] = {
             name: `${sensorReadings.name} available`,
             unique_id: `${sensorReadings.content.sensorId}_available`,
             state_topic: `${config.mqtt.topic}/${id}/state`,
@@ -199,7 +199,7 @@ const generateDiscoveryTopics = async () => {
             device_class: 'connectivity',
             entity_category: 'diagnostic',
         };
-        topics[`${config.homeassistant.discovery_topic}/sensor/neurio-2-mqtt/started_at/config`] = {
+        topics[`${config.homeassistant.discovery_topic}/sensor/neurio-2-mqtt/started_at`] = {
             name: `Started`,
             unique_id: 'neurio2mqtt_started_at',
             state_topic: `${config.mqtt.topic}/state`,
@@ -211,7 +211,7 @@ const generateDiscoveryTopics = async () => {
                 configuration_url: 'https://github.com/hanseartic/neurio-2-mqtt',
                 sw_version: process.env.VERSION,
             },
-            device_class: 'date',
+            device_class: 'timestamp',
             entity_category: 'diagnostic',
         };
     }
