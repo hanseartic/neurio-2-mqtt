@@ -2,7 +2,7 @@
 port = 8080
 
 [sensors]
-query_interval = 1000
+query_interval = 10000
 
 [sensors.neurio]
 host = "neurio.local"
@@ -17,4 +17,5 @@ password = ""
 topic = "neurio2mqtt"
 
 [homeassistant]
+discovery = true
 discovery_topic = "homeassistant"

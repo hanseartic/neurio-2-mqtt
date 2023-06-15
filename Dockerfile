@@ -7,7 +7,7 @@ RUN npm i --omit dev --ignore-scripts
 
 EXPOSE 8080
 
-HEALTHCHECK --interval=5s --timeout=3s --start-period=10s --retries=3 \
+HEALTHCHECK --interval=60s --timeout=30s --start-period=15s --retries=3 \
     CMD wget http://localhost:8080/healthcheck -q -O -
 
 ENTRYPOINT [ "node" ]
