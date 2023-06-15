@@ -25,7 +25,9 @@ var customConfig = config.util.diffDeep(defaultConfig, config.util.toObject(conf
 console.log(customConfig);
 
 const app = express();
-const startedAt = new Date().toISOString().split('.')[0] + "Z";
+const isoDate = (date) => date.toISOString().split('.')[0] + "Z";
+
+const startedAt = isoDate(new Date());
 const sensorQueryTimeout = 500;
 
 app.get('/readings', (_, res) => {
@@ -50,11 +52,6 @@ app.get('/healthcheck', (_, res) => {
     }, {});
 
     res.status(200).send(response);
-    const c = getMQTTClient();
-    c.publish(`${config.mqtt.topic}/state`, JSON.stringify({
-        started_at: startedAt,
-        uptime
-    }));
 });
 
 
@@ -65,7 +62,7 @@ const publishReadings = async (reading) => {
 
     c.publish(`${config.mqtt.topic}/${reading.name}/state`, JSON.stringify({
         status: reading.status,
-        last_update: reading.content?.timestamp ?? new Date().toISOString().split('.')[0] + "Z",
+        last_update: reading.content?.timestamp ?? isoDate(new Date()),
     }));
 
     if (!reading.content?.channels) return;
@@ -190,12 +187,27 @@ const generateDiscoveryTopics = async () => {
         for (const topic in sensorTopics) {
             topics[topic] = sensorTopics[topic];
         };
-        topics[`${config.homeassistant.discovery_topic}/binary_sensor/neurio-${sensorReadings.content.sensorId}_available`] = {
-            name: `${sensorReadings.name} available`,
+        topics[`${config.homeassistant.discovery_topic}/binary_sensor/neurio-2-mqtt/${sensorReadings.content.sensorId}_available`] = {
+            name: `Available`,
             unique_id: `${sensorReadings.content.sensorId}_available`,
             state_topic: `${config.mqtt.topic}/${id}/state`,
             value_template: "{{ 'ON' if value_json.status == 200 else 'OFF' }}",
             dev,
+            device_class: 'connectivity',
+            entity_category: 'diagnostic',
+        };
+        topics[`${config.homeassistant.discovery_topic}/binary_sensor/neurio-2-mqtt/available`] = {
+            name: `Available`,
+            unique_id: 'neurio2mqtt_available',
+            state_topic: `${config.mqtt.topic}/state`,
+            value_template: '{{ value_json.status }}',
+            dev: {
+                name: 'neurio-2-mqtt',
+                ids: 'neurio-2-mqtt',
+                manufacturer: 'hanseartic',
+                configuration_url: 'https://github.com/hanseartic/neurio-2-mqtt',
+                sw_version: process.env.VERSION,
+            },
             device_class: 'connectivity',
             entity_category: 'diagnostic',
         };
@@ -210,6 +222,29 @@ const generateDiscoveryTopics = async () => {
                 manufacturer: 'hanseartic',
                 configuration_url: 'https://github.com/hanseartic/neurio-2-mqtt',
                 sw_version: process.env.VERSION,
+            },
+            availability: {
+                topic: `${config.mqtt.topic}/state`,
+                value_template: "{{ 'online' if value_json.status == 'ON' else 'offline' }}",
+            },
+            device_class: 'timestamp',
+            entity_category: 'diagnostic',
+        };
+        topics[`${config.homeassistant.discovery_topic}/sensor/neurio-2-mqtt/connected_at`] = {
+            name: `Connected`,
+            unique_id: 'neurio2mqtt_connected_at',
+            state_topic: `${config.mqtt.topic}/state`,
+            value_template: '{{ value_json.connected_at }}',
+            dev: {
+                name: 'neurio-2-mqtt',
+                ids: 'neurio-2-mqtt',
+                manufacturer: 'hanseartic',
+                configuration_url: 'https://github.com/hanseartic/neurio-2-mqtt',
+                sw_version: process.env.VERSION,
+            },
+            availability: {
+                topic: `${config.mqtt.topic}/state`,
+                value_template: "{{ 'online' if value_json.status == 'ON' else 'offline' }}",
             },
             device_class: 'timestamp',
             entity_category: 'diagnostic',
@@ -249,10 +284,6 @@ const requestLoop = async () => {
         .then(sensorReadings => {
             for (const reading of sensorReadings) {
                 publishReadings(reading);
-                if (reading) {
-                } else {
-                    //console.log(reading);
-                }
             }
         })
         .catch(console.log);
@@ -272,13 +303,54 @@ fs.watch(__dirname + '/config', (type, filename) => {
     config = configUncached.reloadConfigs();
 });
 
+let mqttClient;
 const getMQTTClient = () => {
-    const clientOptions = {
-        username: config.mqtt.user ? config.mqtt.user : null,
-        password: config.mqtt.password ? config.mqtt.password : null,
-    };
+    if (!mqttClient) {
+        const clientOptions = {
+            username: config.mqtt.user ? config.mqtt.user : null,
+            password: config.mqtt.password ? config.mqtt.password : null,
+            clientId: 'neurio2mqtt' + Math.random().toString(16).substring(2, 8),
+            protocolVersion: 5,
+            will: {
+                topic: `${config.mqtt.topic}/state`,
+                payload: JSON.stringify({
+                    status: 'OFF',
+                    started_at: startedAt,
+                }),
+                qos: 0,
+                retain: true,
+            }
+        };
 
-    return connect(`${config.mqtt.proto}://${config.mqtt.host}:${config.mqtt.port}`, clientOptions);
+        mqttClient = connect(`${config.mqtt.proto}://${config.mqtt.host}:${config.mqtt.port}`, clientOptions);
+
+        mqttClient.on('connect', function () {
+            console.log('mqtt-client connected');
+            if (config.homeassistant.discovery) {
+                publishHassioDiscovery();
+            }
+
+            mqttClient.publish(`${config.mqtt.topic}/state`, JSON.stringify({
+                status: 'ON',
+                started_at: startedAt,
+                connected_at: isoDate(new Date()),
+            }), { qos: 0, retain: true });
+        });
+
+        mqttClient.on('close', function () {
+            console.log('mqtt-connection closed by client');
+        });
+
+        mqttClient.on('reconnect', function () {
+            console.log('mqtt-client trying a reconnection');
+        });
+
+        mqttClient.on('offline', function () {
+            console.log('mqtt-client went offline');
+        });
+    }
+
+    return mqttClient;
 }
 
 app.listen(config.bridge.port, () => {
@@ -287,22 +359,28 @@ app.listen(config.bridge.port, () => {
 });
 
 process.on('SIGUSR1', () => {
-    generateDiscoveryTopics().then(t => {
-        if (!t) { return; }
-        console.log('Publishing homeassistant discovery topics to MQTT');
-
-        const c = getMQTTClient();
-        c.on('connect', () => {
-            Object.keys(t).forEach(k => {
-                console.log(`${k}/config`);
-                c.publish(`${k}/config`, JSON.stringify(t[k]), { qos: 0, retain: true });
-            })
-         });
-    });
+    publishHassioDiscovery();
 });
+
+const publishHassioDiscovery = () => {
+    generateDiscoveryTopics()
+        .then(t => {
+            if (!t) { return; }
+            console.log('Publishing homeassistant discovery topics to MQTT');
+
+            Object
+                .keys(t)
+                .forEach(k => {
+                    console.log(`${k}/config`);
+                    getMQTTClient()
+                        .publish(`${k}/config`, JSON.stringify(t[k]), { qos: 0, retain: true });
+                });
+        });
+};
 
 const terminate = () => {
     console.log("bye");
+    getMQTTClient().end();
     process.exit();
 };
 
