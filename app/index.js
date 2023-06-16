@@ -127,7 +127,7 @@ const generateDiscoveryTopics = async () => {
             const name = `${sensorReadings.name} ${type.replace('_', ' ')}`;
             const template = {
                 name,
-                object_id: `sensor.neurio2mqtt.${sensorReadings.name}.${b.ch}`,
+                object_id: `neurio2mqtt.${sensorReadings.name}.${b.ch}`,
                 unique_id: `${sensorReadings.content.sensorId}_${b.ch}`,
                 state_topic: `${config.mqtt.topic}/${id}/${type}/state`,
                 dev,
@@ -206,7 +206,7 @@ const generateDiscoveryTopics = async () => {
         };
         topics[`${config.homeassistant.discovery_topic}/binary_sensor/neurio-2-mqtt/available`] = {
             name: `Available`,
-            object_id: 'binary_sensor.neurio2mqtt.available',
+            object_id: 'neurio2mqtt.available',
             unique_id: 'neurio2mqtt_available',
             state_topic: `${config.mqtt.topic}/state`,
             value_template: '{{ value_json.status }}',
@@ -222,7 +222,7 @@ const generateDiscoveryTopics = async () => {
         };
         topics[`${config.homeassistant.discovery_topic}/sensor/neurio-2-mqtt/started_at`] = {
             name: `Started`,
-            object_id: 'sensor.neurio2mqtt.started',
+            object_id: 'neurio2mqtt.started',
             unique_id: 'neurio2mqtt_started_at',
             state_topic: `${config.mqtt.topic}/state`,
             value_template: '{{ value_json.started_at }}',
@@ -242,7 +242,7 @@ const generateDiscoveryTopics = async () => {
         };
         topics[`${config.homeassistant.discovery_topic}/sensor/neurio-2-mqtt/connected_at`] = {
             name: `Connected`,
-            object_id: 'sensor.neurio2mqtt.connected',
+            object_id: 'neurio2mqtt.connected',
             unique_id: 'neurio2mqtt_connected_at',
             state_topic: `${config.mqtt.topic}/state`,
             value_template: '{{ value_json.connected_at }}',
