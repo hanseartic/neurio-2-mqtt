@@ -196,7 +196,7 @@ const generateDiscoveryTopics = async () => {
         };
         topics[`${config.homeassistant.discovery_topic}/binary_sensor/neurio-2-mqtt/${sensorReadings.content.sensorId}_available`] = {
             name: `Available`,
-            object_id: `binary_sensor.neurio2mqtt.${sensorReadings.name}.available`,
+            object_id: `neurio2mqtt.${sensorReadings.name}.available`,
             unique_id: `${sensorReadings.content.sensorId}_available`,
             state_topic: `${config.mqtt.topic}/${id}/state`,
             value_template: "{{ 'ON' if value_json.status == 200 else 'OFF' }}",
