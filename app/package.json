@@ -29,7 +29,7 @@
     "humanize-duration": "^3.28.0",
     "mqtt": "^4.3.7",
     "node-fetch": "^3.3.1",
-    "node-html-parser": "^6.1.5",
+    "node-html-parser": "^6.1.11",
     "timeout-signal": "^2.0.0",
     "toml": "^3.0.0"
   }
