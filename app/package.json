@@ -24,7 +24,7 @@
   "dependencies": {
     "@tauri-apps/toml": "^2.2.4",
     "config": "^3.3.9",
-    "config-reloadable": "^1.0.9",
+    "config-reloadable": "^1.0.10",
     "express": "^4.18.2",
     "humanize-duration": "^3.28.0",
     "mqtt": "^4.3.7",
