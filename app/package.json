@@ -27,7 +27,7 @@
     "config-reloadable": "^1.0.9",
     "express": "^4.18.2",
     "humanize-duration": "^3.28.0",
-    "mqtt": "^4.3.7",
+    "mqtt": "^5.3.3",
     "node-fetch": "^3.3.1",
     "node-html-parser": "^6.1.5",
     "timeout-signal": "^2.0.0",
