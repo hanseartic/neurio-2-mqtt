@@ -25,7 +25,7 @@
     "@tauri-apps/toml": "^2.2.4",
     "config": "^3.3.9",
     "config-reloadable": "^1.1.0",
-    "express": "^4.18.2",
+    "express": "^4.19.1",
     "humanize-duration": "^3.31.0",
     "mqtt": "^4.3.7",
     "node-fetch": "^3.3.2",
